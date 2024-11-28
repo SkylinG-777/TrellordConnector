@@ -21,12 +21,12 @@ const config = {
             'boardName': 'Sentinelle Capital - Master Board',
             'boardId': '6745103a114e8fde86cad587', // This is the board trello id
             'disableComments': false, // This is to disable the comments in the console
-            'timer_duration': 20 * 60 * 1000, // 20 minutes in milliseconds
-            'check_interval': 1 * 60 * 1000, // 5 minutes in milliseconds
+            'timer_duration': 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+            'check_interval': 1 * 60 * 1000, // 1 minutes in milliseconds
             'discord_configs': {
-                'mentions': ['<@&1185625385514307645>', '@everyone'],
+                'mentions': ['@everyone'],
                 'webhookUrl': discordWebhookUrl,
-                'username': 'TrellordConnector - GTA V ROADMAP',
+                'username': 'Sentinello',
                 'avatar_url': 'https://media.discordapp.net/attachments/1190453964605493328/1193990719891853424/colores.png?ex=661d7782&is=660b0282&hm=66c624f92f5d28089e16603b9da724d3dce6bb2d5df23fdf89a70b21e249b91b&=&format=png&quality=lossless&width=671&height=671',
             }
         }
@@ -345,3 +345,4 @@ function formatDate(dateString) {
     const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString("es-ES", options);
 }
+
