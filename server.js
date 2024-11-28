@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const fetch = require('node-fetch');
 const i18n = require('./scripts/language');
@@ -12,40 +13,37 @@ const language = i18n[process.env.LANGUAGE || 'en'];
 let lastActionId = '';
 let messagesSended = [];
 let messagesQueue = [];
+const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL;
 
 const config = {
     trellos: [ 
         {
-            'boardName': 'GTA V - ROADMAP',
-            'boardId': 'wlLJdpTt', // This is the board trello id
+            'boardName': 'Sentinelle Capital - Master Board',
+            'boardId': '6745103a114e8fde86cad587', // This is the board trello id
             'disableComments': false, // This is to disable the comments in the console
             'timer_duration': 20 * 60 * 1000, // 20 minutes in milliseconds
-            'check_interval': 5 * 60 * 1000, // 5 minutes in milliseconds
+            'check_interval': 1 * 60 * 1000, // 5 minutes in milliseconds
             'discord_configs': {
                 'mentions': ['<@&1185625385514307645>', '@everyone'],
-                'webhookUrl': 'https://discord.com/api/webhooks/1185625385514307645/s8HJaXcy3GQxb9GByUhVZW6p8XGI1BGI_Nq2e4yPcjuoZwkJaLse42ua4dGtIlGQsxG-',
+                'webhookUrl': discordWebhookUrl,
                 'username': 'TrellordConnector - GTA V ROADMAP',
-                'avatar_url': 'https://media.discordapp.net/attachments/1190453964605493328/1193990719891853424/colores.png?ex=661d7782&is=660b0282&hm=66c624f92f5d28089e16603b9da724d3dce6bb2d5df23fdf89a70b21e249b91b&=&format=png&quality=lossless&width=671&height=671',
-            }
-        },
-        {
-            'boardName': 'ARK - ROADMAP',
-            'boardId': 'kidWdfvh',
-            'disableComments': false,
-            'timer_duration': 20 * 60 * 1000,
-            'check_interval': 5 * 60 * 1000,
-            'discord_configs': {
-                'mentions': ['<@&1185625385514307645>', '@everyone'],
-                'webhookUrl': 'https://discord.com/api/webhooks/1185625385514307645/s8HJaXcy3GQxb9GByUhVZW6p8XGI1BGI_Nq2e4yPcjuoZwkJaLse42ua4dGtIlGQsxG-',
-                'username': 'TrellordConnector - ARK ROADMAP',
                 'avatar_url': 'https://media.discordapp.net/attachments/1190453964605493328/1193990719891853424/colores.png?ex=661d7782&is=660b0282&hm=66c624f92f5d28089e16603b9da724d3dce6bb2d5df23fdf89a70b21e249b91b&=&format=png&quality=lossless&width=671&height=671',
             }
         }
     ],
 }
 
+console.log('Trello API Key:', trelloApiKey);
+console.log('Trello Token:', trelloToken);
+console.log('Board ID:', config.trellos[0].boardId); // Change the index to match the new board
+
+
 app.listen(8080, () => {
     console.clear();
+    console.log('Trello API Key:', trelloApiKey);
+    console.log('Trello Token:', trelloToken);
+    console.log('Board ID:', config.trellos[0].boardId);
+    console.log(process.env);
 	serverStart = new Date();
 	console.log(`
 				███████╗██████╗░░█████╗░░█████╗░████████╗░█████╗░██╗░░░░░
@@ -114,49 +112,69 @@ async function checkForTrelloUpdates(config) {
 }
 
 async function sendMessagesToDiscord(configs) {
-    debugComment(language.sending_to_discord, configs.disableComments);
+    console.log(`[INFO] Triggered sendMessagesToDiscord for board: ${configs.boardId}`);
+
+    // Filter messages to send
     let messagesToSend = messagesQueue.filter(message => message.boardId === configs.boardId);
+    console.log(`[DEBUG] Messages Queue for Discord:`, messagesToSend);
+
     if (messagesToSend.length > 0) {
         const customMessage = {
             content: configs.discord_configs.mentions.join(' '),
         };
-        
+
+        console.log(`[DEBUG] Sending mentions message to Discord:`, customMessage);
+
         try {
-            await fetch(configs.discord_configs.webhookUrl, {
+            // Send the mentions message
+            const mentionResponse = await fetch(configs.discord_configs.webhookUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(customMessage),
             });
-        } catch (error) {
-            console.error(language.error_sending_to_discord, error);
-        }
-    
 
-        try {
+            if (!mentionResponse.ok) {
+                console.error(
+                    `[ERROR] Failed to send mentions message. Status: ${mentionResponse.status}, Response: ${await mentionResponse.text()}`
+                );
+            } else {
+                console.log(`[SUCCESS] Mentions message sent successfully.`);
+            }
+
+            // Send each message in the queue
             for (let message of messagesToSend) {
-                try {
-                    await fetch(configs.discord_configs.webhookUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(message.value),
-                    });
+                console.log(`[DEBUG] Sending queued message to Discord:`, message.value);
 
-                    messagesSended.push(message.key);
-                } catch (error) {
-                    console.error(language.error_sending_to_discord, error);
+                const messageResponse = await fetch(configs.discord_configs.webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(message.value),
+                });
+
+                if (!messageResponse.ok) {
+                    console.error(
+                        `[ERROR] Failed to send queued message. Status: ${messageResponse.status}, Response: ${await messageResponse.text()}`
+                    );
+                } else {
+                    console.log(`[SUCCESS] Message sent successfully to Discord.`);
+                    messagesSended.push(message.key); // Mark as sent
                 }
             }
         } catch (error) {
-            console.error(language.error_sending_to_discord, error);
+            console.error(`[EXCEPTION] Error sending messages to Discord:`, error);
         }
+    } else {
+        console.log(`[INFO] No messages in the queue to send.`);
     }
 
+    // Clear sent messages from the queue
+    console.log(`[DEBUG] Clearing sent messages from queue.`);
     messagesQueue = messagesQueue.filter(message => !messagesSended.includes(message.key));
+    console.log(`[DEBUG] Remaining messages in queue:`, messagesQueue);
 }
+
+
+
 
 
 
