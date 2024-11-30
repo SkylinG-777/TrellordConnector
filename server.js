@@ -21,10 +21,10 @@ const config = {
             'boardName': 'Sentinelle Capital - Master Board',
             'boardId': '6745103a114e8fde86cad587', // This is the board trello id
             'disableComments': false, // This is to disable the comments in the console
-            'timer_duration': 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+            'timer_duration': 1 * 60 * 60 * 1000, // 1 hour in milliseconds
             'check_interval': 1 * 60 * 1000, // 1 minutes in milliseconds
             'discord_configs': {
-                'mentions': ['@everyone'],
+                'mentions': ['Dear Sentinelle Capital Team, here are the latest updates from Trello:'],
                 'webhookUrl': discordWebhookUrl,
                 'username': 'Sentinello',
                 'avatar_url': 'https://media.discordapp.net/attachments/1190453964605493328/1193990719891853424/colores.png?ex=661d7782&is=660b0282&hm=66c624f92f5d28089e16603b9da724d3dce6bb2d5df23fdf89a70b21e249b91b&=&format=png&quality=lossless&width=671&height=671',
@@ -189,7 +189,9 @@ async function createMessage(action, configs) {
             messageTitle = `${language.trello_create_card} "${action.data.card.name}"`;
             messageDescription = language.trello_create_card_desc;
             messageUrl = `https://trello.com/c/${action.data.card.shortLink}`;
-
+            if (action.memberCreator && action.memberCreator.fullName) {
+                messageFields.push({ name: 'Created By', value: action.memberCreator.fullName });
+            }
             if (action.data.card.hasOwnProperty('desc')) {
                 messageFields.push({ name: language.trello_desc, value: action.data.card.desc.substring(0, 100) + '...' });
             }
@@ -226,6 +228,9 @@ async function createMessage(action, configs) {
             messageTitle = `${language.trello_update_card} "${action.data.card.name}"`;
             messageDescription = language.trello_update_card_desc;
             messageUrl = `https://trello.com/c/${action.data.card.shortLink}`;
+            if (action.memberCreator && action.memberCreator.fullName) {
+                messageFields.push({ name: 'Changed By', value: action.memberCreator.fullName });
+            }
             if (action.data.old.hasOwnProperty('idList')) {
                 messageFields.push({ name: language.trello_previous_list, value: action.data.listBefore.name });
                 messageFields.push({ name: language.trello_current_list, value: action.data.listAfter.name });
@@ -261,57 +266,72 @@ async function createMessage(action, configs) {
         case 'deleteCard':
             messageTitle = language.trello_delete_card;
             messageDescription = language.trello_delete_card_desc
+            if (action.memberCreator && action.memberCreator.fullName) {
+                messageFields.push({ name: 'Deleted By', value: action.memberCreator.fullName });
+            }
             break;
         case 'addMemberToCard':
             messageTitle = `${language.trello_add_member_to_card}"${action.data.card.name}"`;
             messageDescription = language.trello_add_member_to_card_desc;
             messageUrl = `https://trello.com/c/${action.data.card.shortLink}`;
+            if (action.memberCreator && action.memberCreator.fullName) {
+                messageFields.push({ name: 'Added By', value: action.memberCreator.fullName });
+            }
             break;
         case 'removeMemberFromCard':
             messageTitle = `${language.trello_remove_member_from_card}"${action.data.card.name}"`;
             messageDescription = language.trello_remove_member_from_card_desc;
             messageUrl = `https://trello.com/c/${action.data.card.shortLink}`;
+            if (action.memberCreator && action.memberCreator.fullName) {
+                messageFields.push({ name: 'Removed By', value: action.memberCreator.fullName });
+            }
             break;
         case 'moveCardToBoard':
             messageTitle = `${language.trello_move_card_to_board}"${action.data.card.name}"`;
             messageDescription = language.trello_move_card_to_board_desc;
             messageUrl = `https://trello.com/c/${action.data.card.shortLink}`;
+            if (action.memberCreator && action.memberCreator.fullName) {
+                messageFields.push({ name: 'Moved By', value: action.memberCreator.fullName });
+            }
             break;
         case 'updateList':
             messageTitle = `${language.trello_update_list} "${action.data.listAfter.name}"`;
             messageDescription = language.trello_update_list_desc;
             messageUrl = `https://trello.com/c/${action.data.card.shortLink}`;
+            if (action.memberCreator && action.memberCreator.fullName) {
+                messageFields.push({ name: 'Updated By', value: action.memberCreator.fullName });
+            }
             break;
         case 'addChecklistToCard':
             messageTitle = `${language.trello_addChecklistToCard}"${action.data.card.name}"`;
             messageDescription = language.trello_addChecklistToCard_desc;
             messageUrl = `https://trello.com/c/${action.data.card.shortLink}`;
+            if (action.memberCreator && action.memberCreator.fullName) {
+                messageFields.push({ name: 'Added By', value: action.memberCreator.fullName });
+            }
             break;
         case 'removeChecklistFromCard':
             messageTitle = `${language.trello_removeChecklistFromCard}"${action.data.card.name}"`;
             messageDescription = language.trello_removeChecklistFromCard_desc;
             messageUrl = `https://trello.com/c/${action.data.card.shortLink}`;
+            if (action.memberCreator && action.memberCreator.fullName) {
+                messageFields.push({ name: 'Removed By', value: action.memberCreator.fullName });
+            }
             break;
         case 'updateCheckItemStateOnCard':
             messageTitle = `${language.trello_updateCheckItemStateOnCard}"${action.data.checkItem.name}"`;
             messageDescription = language.trello_updateCheckItemStateOnCard_desc;
             messageUrl = `https://trello.com/c/${action.data.card.shortLink}`;
-            if (action.data.checkItem.hasOwnProperty('state')) {
-                if (action.data.checkItem.state == 'complete') {
-                    messageFields.push({ name: language.trello_updateCheckItemStateOnCard_name, value: ':white_check_mark: ' + action.data.checkItem.name });
-                } else {
-                    messageFields.push({ name: language.trello_updateCheckItemStateOnCard_name, value: ':x: ' + action.data.checkItem.name });
-                }
-            }           
-        
+            if (action.memberCreator && action.memberCreator.fullName) {
+                messageFields.push({ name: 'Updated By', value: action.memberCreator.fullName });
+            }
             break;
         case 'updateChecklist':
             messageTitle = `${language.trello_updateChecklist}"${action.data.checklist.name}"`;
             messageDescription = language.trello_updateChecklist_desc;
             messageUrl = `https://trello.com/c/${action.data.card.shortLink}`;
-            if (action.data.checklist.hasOwnProperty('name')) {
-                messageFields.push({ name: language.trello_updateChecklist_previous_name, value: action.data.old.name });
-                messageFields.push({ name: language.trello_updateChecklist_current_name, value: action.data.checklist.name });
+            if (action.memberCreator && action.memberCreator.fullName) {
+                messageFields.push({ name: 'Updated By', value: action.memberCreator.fullName });
             }
             break;
         default:
